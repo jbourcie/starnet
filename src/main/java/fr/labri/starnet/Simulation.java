@@ -3,13 +3,24 @@ package fr.labri.starnet;
 import java.util.ArrayList;
 
 import fr.labri.Utils;
-import fr.labri.starnet.Node.Descriptor;
+import fr.labri.starnet.INode.Descriptor;
+import fr.labri.starnet.INode.EnergyModel;
 import fr.labri.starnet.SpreadModel.SpreadModelFactory;
 import fr.labri.starnet.ui.SimpleUI;
 
 public class Simulation implements Runnable {
 	public static final boolean DEBUG = Boolean.parseBoolean(System.getProperty("starnet.debug", "true"));
 	public static final boolean PARALLEL = Boolean.parseBoolean(System.getProperty("starnet.parallel", "true"));
+	
+	public final double ENERGY_EXPONENT = Double.parseDouble(System.getProperty("starnet.energy.exoponent", "4"));
+	public final double ENERGY_BASICCOST = Double.parseDouble(System.getProperty("starnet.energy.basiccost", "100000000"));
+
+	
+	public final double NODE_POWERLEVEL = Double.parseDouble(System.getProperty("starnet.node.powerlevel", "100000000000"));
+	public final double NODE_RANGEMAX = Double.parseDouble(System.getProperty("starnet.node.basiccost", "250"));
+	public final double NODE_EMISSION_WINDOW = Double.parseDouble(System.getProperty("starnet.node.window", Double.toString(Math.PI / 3)));
+
+	
 	final World _world;
 	
 	volatile State _state;
@@ -27,7 +38,7 @@ public class Simulation implements Runnable {
 	}
 	
 	static Simulation createSimulation(int w, int h, int nbNodes) {
-		Simulation simu = new Simulation(PARALLEL ? AbstractWorld.newParallelWorld(w, h) : AbstractWorld.newSimpleWorld(w, h));
+		Simulation simu = new Simulation(PARALLEL ? World.newParallelWorld(w, h) : World.newSimpleWorld(w, h));
 		simu.createNodes(nbNodes);
 		simu.init();
 		return simu;
@@ -53,21 +64,28 @@ public class Simulation implements Runnable {
 	void createNodes(int nbNodes) {
 		Descriptor desc = getDesciptor();
 		for(int i = 0; i< nbNodes; i ++)
-			new AbstractNode(_world, desc);
+			new Node(_world, desc);
 	}
 	
+	EnergyModel _energyModel = Models.getPowerEnergyModel(ENERGY_EXPONENT, ENERGY_BASICCOST);
+			
 	Descriptor getDesciptor() {
 		return new Descriptor() {
-			public int getMaxPower() {
-				return 1000;
+			public double getMaxPower() {
+				return NODE_POWERLEVEL;
 			}
 			
 			public double getEmissionWindow() {
-				return Math.PI / 3;
+				return NODE_EMISSION_WINDOW;
 			}
 			
-			public int getEmissionRange() {
-				return 300;
+			public double getEmissionRange() {
+				return NODE_RANGEMAX;
+			}
+
+			@Override
+			public EnergyModel getEneryModel() {
+				return _energyModel;
 			}
 		};
 	}
