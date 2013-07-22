@@ -1,8 +1,10 @@
 package fr.labri.starnet;
 
 import java.util.Map;
+import java.util.Random;
 
 import fr.labri.starnet.Message.Type;
+import fr.labri.starnet.models.EnergyModel;
 
 public interface INode {
 	Address getAddress();
@@ -24,30 +26,35 @@ public interface INode {
 
 	OrientedPosition getPosition();
 	void move(OrientedPosition position);
+	Map<String, Object> getStorage();
 	
 	boolean isOnline();
 	
-	interface Descriptor {
+	MessageFactory newMessage();
+	
+	public interface Descriptor {
 		double getEmissionRange();
 		double getEmissionWindow();
 		double getMaxPower();
 		EnergyModel getEneryModel();
 	}
 	
-	interface EnergyModel {
-		double distance(double rangeMax, double power);
-		double energy(double rangeMax, double range);
+	public interface Observer {
+		void messageReceived(INode receiver);
+		void messageSent(INode sender, double range);
 	}
 
-	public Message createMessage(Type type);
-	public Message createMessage(Type type, Address dest);
-	public Message createMessage(Type type, Address to, Map<String, Object> data);
-	public Message createMessage(Type type, Address to, int payload);
-	public Message createMessage(Type type, Address to, int payload, Map<String, Object> data);
+	public interface MessageFactory {
+		public Message create(Type type);
+		public Message create(Type type, Address dest);
+		public Message create(Type type, Address to, Map<String, Object> data);
+		public Message create(Type type, Address to, int payload);
+		public Message create(Type type, Address to, int payload, Map<String, Object> data);
 
-	public Message forwardMessage(Message msg);
-	public Message forwardMessage(Message msg, Map<String, Object> data);
-
-	int newMessageID();
+		public Message from(Message msg);
+		public Message from(Message msg, Map<String, Object> data);
+	}
 	
+	public long getTime();
+	public Random getRandom();
 }
